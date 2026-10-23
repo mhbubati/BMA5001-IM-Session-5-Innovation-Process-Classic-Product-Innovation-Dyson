@@ -92,11 +92,28 @@
         .modal-content ul{text-align:left;margin:20px 0;padding-left:25px;font-size:1.1rem}
         .modal-content li{margin-bottom:12px;color:var(--text)}
         
+        /* ★ FOOTER STYLES */
+        .module-footer{max-width:1200px;margin:30px auto 20px;padding:25px 20px;background:rgba(15,23,42,0.98);border-top:4px solid #fbbf24;text-align:center;border-radius:15px;line-height:1.9;color:#cbd5e1;box-shadow:0 -10px 30px rgba(0,0,0,0.3);position:relative;z-index:10}
+        .module-footer .footer-line1{font-weight:800;color:#fbbf24;font-size:1.05rem;margin-bottom:6px;letter-spacing:.3px}
+        .module-footer .footer-line2{font-weight:700;color:#e2e8f0;font-size:1rem;margin-bottom:4px}
+        .module-footer .footer-line3{font-size:.95rem;color:#cbd5e1;margin-bottom:6px}
+        .module-footer .footer-line3 a{color:#7dd3fc;text-decoration:none;font-weight:600}
+        .module-footer .footer-line3 a:hover{text-decoration:underline}
+        .module-footer .footer-line4{font-size:.9rem;color:#94a3b8;font-style:italic;margin-top:8px;padding-top:10px;border-top:1px solid rgba(56,189,248,0.2)}
+        
+        /* ★ RESET DIALOG */
+        .reset-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:2000;justify-content:center;align-items:center;padding:20px}
+        .reset-overlay.active{display:flex}
+        .reset-dialog{background:var(--card-bg);border-radius:20px;padding:30px;max-width:440px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);border-top:5px solid #fbbf24}
+        .reset-dialog h3{color:var(--primary);font-size:1.6rem;font-weight:900;margin-bottom:12px}
+        .reset-dialog p{color:var(--text);font-size:1.05rem;margin-bottom:20px;line-height:1.6}
+        .reset-dialog .btn-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+
         @media(max-width:768px){
             .game-container{padding:15px 10px}
             .header-card h1{font-size:2rem}
             .game-header{flex-direction:column;align-items:stretch;padding:15px}
-            .score-board, .timer{font-size:1.2rem;padding:8px 16px}
+            .score-board, .timer{font-size:1.2rem;padding:8px 16px;text-align:center}
             .btn{padding:10px 20px;font-size:1rem}
             .game-area{flex-direction:column}
             .domino-pool, .domino-chain{min-width:100%}
@@ -108,6 +125,10 @@
             .remove-btn{width:32px;height:32px;font-size:1.1rem}
             .celebration-message{font-size:2rem;padding:30px 40px}
             .modal-content{padding:25px}
+            .module-footer{margin:20px 10px;padding:20px 15px}
+            .module-footer .footer-line1{font-size:.95rem}
+            .module-footer .footer-line2{font-size:.9rem}
+            .module-footer .footer-line3, .module-footer .footer-line4{font-size:.85rem}
         }
     </style>
 </head>
@@ -153,6 +174,7 @@
             <div class="timer">Time: <span id="timer">05:00</span></div>
             <div class="button-group">
                 <button class="btn btn-info" onclick="showInstructions()">📋 Instructions</button>
+                <button class="btn btn-secondary" onclick="clearSelection()" style="background:linear-gradient(135deg,#64748b,#475569)">🧹 Clear</button>
                 <button class="btn btn-secondary" onclick="resetGame()">🔄 Reset</button>
             </div>
         </div>
@@ -174,6 +196,26 @@
             <h3>🎯 Final Score</h3>
             <div class="score" id="finalScore">0</div>
             <p style="margin-top:15px;font-size:1.2rem">Amazing work! 🌟</p>
+        </div>
+    </div>
+    
+    <!-- ★ NEW FOOTER -->
+    <footer class="module-footer">
+        <div class="footer-line1">🏛️ Bath Spa University — Hackney</div>
+        <div class="footer-line2">BMA5001 — Innovation Management</div>
+        <div class="footer-line3">Module Leader: Mohammed Hbubati — 📧 <a href="mailto:m.hbubati@bathspa.ac.uk">m.hbubati@bathspa.ac.uk</a></div>
+        <div class="footer-line4">🌱 Designed for Interactive &amp; Sustainable Learning</div>
+    </footer>
+    
+    <!-- ★ RESET DIALOG -->
+    <div id="resetOverlay" class="reset-overlay">
+        <div class="reset-dialog">
+            <h3 id="resetTitle">🔄 Reset Game?</h3>
+            <p id="resetMsg">Your current progress will be lost. The cards will be reshuffled.</p>
+            <div class="btn-row">
+                <button class="btn btn-secondary" id="ovYes">Yes, reset</button>
+                <button class="btn btn-info" id="ovNo">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -423,11 +465,20 @@
             }
         }
 
+        /* ★ FIX: Sweep selection helper - clears .selected from every card */
+        function sweepSelection() {
+            var cards = document.querySelectorAll('.domino-card.selected');
+            for (var i = 0; i < cards.length; i++) {
+                cards[i].classList.remove('selected');
+            }
+        }
+
         function selectCard(cardIndex) {
             if (!gameActive || gameCompleted) return;
             
             if (selectedCardIndex === cardIndex) {
                 selectedCardIndex = null;
+                sweepSelection();
                 renderDominoPool();
                 showFeedback('👆 Card deselected', 'info');
                 return;
@@ -456,6 +507,7 @@
             shuffledCards.splice(selectedCardIndex, 1);
             currentChain[slotIndex] = card;
             selectedCardIndex = null;
+            sweepSelection(); /* ★ FIX: clear selection visually */
             
             if (checkCardCorrectness(card, slotIndex)) {
                 score += 10;
@@ -556,13 +608,39 @@
             }, 3000);
         }
 
+        /* ★ NEW: Clear selection button */
+        function clearSelection() {
+            if (selectedCardIndex === null) {
+                showFeedback('ℹ️ No card is currently selected', 'info');
+                return;
+            }
+            selectedCardIndex = null;
+            sweepSelection();
+            renderDominoPool();
+            showFeedback('🧹 Selection cleared', 'info');
+            playSound('click');
+        }
+
+        /* ★ FIX: Reset now uses custom dialog (no accidental reset) */
         function resetGame() {
+            if (!gameActive && !gameCompleted && score === 0) {
+                doReset();
+                return;
+            }
+            document.getElementById('resetTitle').textContent = '🔄 Reset Game?';
+            document.getElementById('resetMsg').textContent = 'Your current progress will be lost. The cards will be reshuffled.';
+            document.getElementById('resetOverlay').classList.add('active');
+        }
+
+        function doReset() {
             if (timerInterval) clearInterval(timerInterval);
             gameActive = false;
             gameCompleted = false;
             selectedCardIndex = null;
+            sweepSelection();
             initGame();
             document.getElementById('introModal').classList.add('active');
+            document.getElementById('resetOverlay').classList.remove('active');
             showFeedback('Game reset. Ready to play again!', 'info');
             playSound('click');
         }
@@ -571,6 +649,17 @@
         document.getElementById('introModal').addEventListener('click', function(e) {
             if (e.target.id === 'introModal') {
                 document.getElementById('introModal').classList.remove('active');
+            }
+        });
+
+        /* ★ Reset dialog button handlers */
+        document.getElementById('ovYes').addEventListener('click', doReset);
+        document.getElementById('ovNo').addEventListener('click', function() {
+            document.getElementById('resetOverlay').classList.remove('active');
+        });
+        document.getElementById('resetOverlay').addEventListener('click', function(e) {
+            if (e.target.id === 'resetOverlay') {
+                document.getElementById('resetOverlay').classList.remove('active');
             }
         });
     </script>
